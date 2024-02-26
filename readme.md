@@ -3,7 +3,7 @@ npm install jssha
 
 https://www.npmjs.com/package/js-sha256
 
-backend: npm init -y && npm install && npm install mongodb express cors dotenv js-sha256
+backend: npm init -y && npm install && npm install mongodb express cors dotenv js-sha256 connect-mongo express-session
 
 
 

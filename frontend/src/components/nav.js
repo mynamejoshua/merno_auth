@@ -9,7 +9,7 @@ import { NavLink } from "react-router-dom";
 export default function Navbar() {
     return (
         <nav style={{display: "flex"}}>
-                <NavLink to="/">Home</NavLink><span>&nbsp;&nbsp;&nbsp;&nbsp;</span>
+                <NavLink to="/">Login</NavLink><span>&nbsp;&nbsp;&nbsp;&nbsp;</span>
                 <NavLink to="/reg">Register</NavLink><span>&nbsp;&nbsp;&nbsp;&nbsp;</span>
                 <NavLink to="/score">Score</NavLink>
         </nav>
