@@ -51,7 +51,7 @@ authRoutes.route("/auth").post(async function (req, response) {
 
   if (userRecord) {
     console.log("user found by username and password");
-    console.log(userRecord);
+    // console.log(userRecord);
 
     // comment some of thes out when working
     req.session.userId = userRecord._id;
@@ -68,11 +68,13 @@ authRoutes.route("/auth").post(async function (req, response) {
 authRoutes.route("/register").post(async function (req, response) {
   const password = req.body.password;
   const userName = req.body.userName;
+  const role = req.body.role;
   const salt = Math.floor(Math.random() * 999999);
 
   myobj = {
     passwordHash: sha256(password + salt),
     userName: userName,
+    role: role,
     salt: salt,
   };
 
@@ -85,14 +87,16 @@ authRoutes.route("/register").post(async function (req, response) {
 
 authRoutes.route("/prev").get(async function (req, res) {
   console.log("req.session.userid: ", req.session.userId);
-
+  console.log("username: ", await req.session.userName);
+  console.log("username: ", await req.session.username);
+  console.log("password: ", await req.session.password);
   // if (req.session.userId) {
   if (1) {
     // const userRecord = await get_user_by_id(req.session.userId);
     console.log(req.session);
     const userRecord = await get_user(
-      req.session.userName,
-      req.session.password
+      await req.session.userName,
+      await req.session.password
     );
 
     if (userRecord) {
@@ -105,6 +109,15 @@ authRoutes.route("/prev").get(async function (req, res) {
   } else {
     // No valid session
     res.status(401).send("not logged in");
+  }
+});
+authRoutes.route("/personalData").get(async function (req, res) {
+  try {
+  const userRecord = await get_user_by_id(req.session.userId);
+  res.json({userName: userRecord.userName, role: userRecord.role})
+  }
+  catch {
+    res.status(401).send("not found");
   }
 });
 
@@ -130,6 +143,8 @@ authRoutes.route("/setSession").get(async function (req, res) {
 });
 
 authRoutes.route("/getSession").get(async function (req, res) {
+  req.session.userName = "b";
+  req.session.password = "b12345";
   if (!req.session.username) {
     console.log("No session found");
   } else {
