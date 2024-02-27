@@ -10,6 +10,14 @@ export default function Register() {
     const [password1, setPassword1] = useState('');
     const [password2, setPassword2] = useState('');
     const [res, setRes] = useState('');
+    // Initialize state to store selected radio button value
+    const [role, setRole] = useState('');
+
+    // Function to update state based on which radio button is selected
+    const handleRoleChange = (event) => {
+        setRole(event.target.value);
+    };
+
 
     const navigate = useNavigate();
 
@@ -23,6 +31,10 @@ export default function Register() {
             alert("passwords dont match");
             return;
         }
+        if (!role) {
+            alert("select a role");
+            return;
+        }
 
         const response = await fetch("http://localhost:5000/register", {
             method: "POST",
@@ -32,6 +44,7 @@ export default function Register() {
             body: JSON.stringify({
                 userName: name,
                 password: password1,
+                role: role,
             }),
         }).catch(error => {
             window.alert(error);
@@ -74,12 +87,12 @@ export default function Register() {
                 </div>
                 <div>
                     <div>
-                        <input type="radio" id="html" name="fav_language" value="customer" />
-                        <label for="customer">Customer</label>
-                        <input type="radio" id="employee" name="fav_language" value="employee" />
-                        <label for="employee">Employee</label>
-                        <input type="radio" id="admin" name="fav_language" value="admin" />
-                        <label for="admin">Admin</label>
+                    <input type="radio" id="customer" name="fav_language" value="customer" onChange={handleRoleChange} />
+                    <label htmlFor="customer">Customer</label>
+                    <input type="radio" id="employee" name="fav_language" value="employee" onChange={handleRoleChange} />
+                    <label htmlFor="employee">Employee</label>
+                    <input type="radio" id="admin" name="fav_language" value="admin" onChange={handleRoleChange} />
+                    <label htmlFor="admin">Admin</label>
                     </div>
                 </div>
                 <div>

@@ -22,6 +22,20 @@ async function get_user(username, password) {
   return null;
 }
 
+async function get_user_by_hash(username, hash) {
+    const db_connect = dbo.getDb();
+    const userRecord = await db_connect
+      .collection("users")
+      .findOne({ userName: username, passwordHash: hash});
+
+    if (!userRecord) {
+      return null;
+    }
+
+    return userRecord;
+}
+
+
 async function get_user_by_id(id) {
   const db_connect = dbo.getDb();
 
@@ -43,7 +57,7 @@ authRoutes.route("/b").get(async function (req, response) {
   response.json({ dog: req.session });
 });
 
-authRoutes.route("/auth").post(async function (req, response) {
+authRoutes.route("/auth").post(async function (req, res) {
   const password = req.body.password;
   const userName = req.body.userName;
 
@@ -52,16 +66,20 @@ authRoutes.route("/auth").post(async function (req, response) {
   if (userRecord) {
     console.log("user found by username and password");
     // console.log(userRecord);
-
-    // comment some of thes out when working
-    req.session.userId = userRecord._id;
-    req.session.userName = userRecord.userName;
-    req.session.password = userRecord.password;
-
-    console.log("req.session.userid: ", req.session.userId);
-    response.json({ msg: "correct" });
+    const user = userRecord.userName; 
+    const hash = userRecord.passwordHash; 
+    
+    req.session.userName = user;
+    req.session.passwordHash = hash;
+    
+    console.log("in auth");
+    console.log("user record: ", userRecord);
+    console.log("session id: ", req.sessionID);
+    console.log("req.session.userName: ", req.session.userName);
+    console.log("req.session.passwordHash: ", req.session.passwordHash);
+    res.json({ msg: "correct" });
   } else {
-    response.status(403).send("not valid");
+    res.status(403).send("not valid");
   }
 });
 
@@ -85,22 +103,21 @@ authRoutes.route("/register").post(async function (req, response) {
   console.log("added record: ", myobj);
 });
 
+// check if user previously logged in
 authRoutes.route("/prev").get(async function (req, res) {
-  console.log("req.session.userid: ", req.session.userId);
-  console.log("username: ", await req.session.userName);
-  console.log("username: ", await req.session.username);
-  console.log("password: ", await req.session.password);
-  // if (req.session.userId) {
-  if (1) {
-    // const userRecord = await get_user_by_id(req.session.userId);
-    console.log(req.session);
-    const userRecord = await get_user(
-      await req.session.userName,
-      await req.session.password
+  console.log("session id: ", req.sessionID);
+  console.log("username: ", req.session.userName);
+  console.log("passwordHash: ", req.session.passwordHash); 
+
+  if (req.session.userName) {
+    // Check for a session variable that you know is set
+    const userRecord = await get_user_by_hash(
+      req.session.userName, 
+      req.session.passwordHash
     );
 
     if (userRecord) {
-      console.log("user found by id");
+      console.log("user found");
       res.json({ message: "logged in" });
     } else {
       // User not found
@@ -111,12 +128,12 @@ authRoutes.route("/prev").get(async function (req, res) {
     res.status(401).send("not logged in");
   }
 });
+
 authRoutes.route("/personalData").get(async function (req, res) {
   try {
-  const userRecord = await get_user_by_id(req.session.userId);
-  res.json({userName: userRecord.userName, role: userRecord.role})
-  }
-  catch {
+    const userRecord = await get_user_by_id(req.session.userId);
+    res.json({ userName: userRecord.userName, role: userRecord.role });
+  } catch {
     res.status(401).send("not found");
   }
 });
@@ -133,7 +150,7 @@ authRoutes.route("/logout").get(async function (req, res) {
 authRoutes.route("/setSession").get(async function (req, res) {
   console.log(req.session);
   if (!req.session.username) {
-    req.session.username = "brad";
+    req.session.username = "dag";
     console.log("Session set");
     console.log(req.session);
   } else {

@@ -20,8 +20,10 @@ app.use(session({
   resave: false, //don't save session if unmodified
   store: MongoStore.create({
     mongoUrl: uri
-  })
+  }),
 }));
+
+
 
 app.listen(port, () => {
   // perform a database connection when server starts
