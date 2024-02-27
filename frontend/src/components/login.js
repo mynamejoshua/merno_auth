@@ -5,7 +5,7 @@ import { useNavigate } from "react-router";
 export default function Login() {
     const [name, setName] = useState('');
     const [password, setPassword] = useState('');
-    const [res, setRes] = useState('');
+    const [status, setStatus] = useState('');
 
 
     const navigate = useNavigate();
@@ -13,16 +13,14 @@ export default function Login() {
     useEffect(() => {
         const fetchData = async () => {
             const response = await fetch("http://localhost:5000/prev");
-            const data = await response.json();
+            const data = null
             try {
-                if (data.access == 1) {
-                    alert("username: ", data.userName);
-                    navigate("/home");
-                } else {
-                    alert("no access");
-                }
-            } catch {
+                data = await response.json();
+            }
+            catch { console.log("no session");}
 
+            if (data) {
+                navigate("/home");
             }
         };
 
@@ -47,11 +45,11 @@ export default function Login() {
                 window.alert(error);
             });
 
-        const data = await response.json()
-        setRes(data.msg)
 
-        if (data.access == 1) {
+        if (response.status == 200) {
             navigate("/home");
+        } else {
+            setStatus("Failed to log in");
         }
     }
 
@@ -70,7 +68,7 @@ export default function Login() {
                 />
                 <button type="submit">Log In</button>
             </form>
-            <p>Result: {res}</p>
+            <p>Result: {status}</p>
         </>
     )
 }
