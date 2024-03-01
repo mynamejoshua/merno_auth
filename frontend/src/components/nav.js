@@ -11,7 +11,7 @@ export default function Navbar() {
         <nav style={{display: "flex"}}>
                 <NavLink to="/">Login</NavLink><span>&nbsp;&nbsp;&nbsp;&nbsp;</span>
                 <NavLink to="/reg">Register</NavLink><span>&nbsp;&nbsp;&nbsp;&nbsp;</span>
-                <NavLink to="/score">Score</NavLink>
+                {/* <NavLink to="/score">Score</NavLink> */}
         </nav>
     )
 }

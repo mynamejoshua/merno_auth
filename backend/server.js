@@ -5,7 +5,8 @@ const app = express();
 const cors = require("cors");
 require("dotenv").config({ path: "./config.env" });
 const port = process.env.PORT || 5000;
-app.use(cors());
+app.use(cors({origin: 'http://localhost:3000', credentials: true, }));
+
 app.use(express.json());
 // get driver connection
 const dbo = require("./db/conn");
@@ -20,10 +21,8 @@ app.use(session({
   resave: false, //don't save session if unmodified
   store: MongoStore.create({
     mongoUrl: uri
-  }),
+  })
 }));
-
-
 
 app.listen(port, () => {
   // perform a database connection when server starts

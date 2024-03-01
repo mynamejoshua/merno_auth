@@ -13,3 +13,11 @@ log in
 log out
 SESSIONS!
 
+
+
+(a + ba+ + aba+)a(ba)* + (b + ab+ + bab+)b(ab)*
+
+(aa + bb)(a + b)* + (a + b)*(aa + bb)
+
+
+

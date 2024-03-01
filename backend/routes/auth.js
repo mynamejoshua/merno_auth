@@ -4,6 +4,7 @@ const authRoutes = express.Router();
 const dbo = require("../db/conn");
 const ObjectId = require("mongodb").ObjectId;
 
+// gets the user based off of usernam and password
 async function get_user(username, password) {
   const db_connect = dbo.getDb();
   const userRecord = await db_connect
@@ -22,31 +23,18 @@ async function get_user(username, password) {
   return null;
 }
 
+// gets user based on username and hash. used when auto logging in with session
 async function get_user_by_hash(username, hash) {
-    const db_connect = dbo.getDb();
-    const userRecord = await db_connect
-      .collection("users")
-      .findOne({ userName: username, passwordHash: hash});
-
-    if (!userRecord) {
-      return null;
-    }
-
-    return userRecord;
-}
-
-
-async function get_user_by_id(id) {
   const db_connect = dbo.getDb();
-
   const userRecord = await db_connect
     .collection("users")
-    .findOne({ _id: ObjectId(id) });
+    .findOne({ userName: username, passwordHash: hash });
 
-  if (userRecord) {
-    return userRecord;
+  if (!userRecord) {
+    return null;
   }
-  return null;
+
+  return userRecord;
 }
 
 authRoutes.route("/a").get(async function (req, response) {
@@ -54,50 +42,54 @@ authRoutes.route("/a").get(async function (req, response) {
 });
 
 authRoutes.route("/b").get(async function (req, response) {
-  response.json({ dog: req.session });
+  response.json({ dog: req.session, sessionID: req.sessionID });
 });
 
+// Log user in with password and username
 authRoutes.route("/auth").post(async function (req, res) {
   const password = req.body.password;
   const userName = req.body.userName;
-
   const userRecord = await get_user(userName, password);
+
+  console.log("Got username and password " + userName + " " + password);
 
   if (userRecord) {
     console.log("user found by username and password");
     // console.log(userRecord);
-    const user = userRecord.userName; 
-    const hash = userRecord.passwordHash; 
-    
+    const user = userRecord.userName;
+    const hash = userRecord.passwordHash;
+
     req.session.userName = user;
     req.session.passwordHash = hash;
-    
-    console.log("in auth");
-    console.log("user record: ", userRecord);
-    console.log("session id: ", req.sessionID);
+
+    console.log("in /auth session id: ", req.sessionID);
+    // console.log("user record: ", userRecord);
     console.log("req.session.userName: ", req.session.userName);
     console.log("req.session.passwordHash: ", req.session.passwordHash);
-    res.json({ msg: "correct" });
+    console.log("Logged in");
+
+    res.json({ msg: "correct", auth: 1 });
   } else {
-    res.status(403).send("not valid");
+    res.json({ msg: "credentials failed " + req.session.loginFailures });
   }
 });
 
+// create a new user
 authRoutes.route("/register").post(async function (req, response) {
-  const password = req.body.password;
-  const userName = req.body.userName;
-  const role = req.body.role;
   const salt = Math.floor(Math.random() * 999999);
 
-  myobj = {
-    passwordHash: sha256(password + salt),
-    userName: userName,
-    role: role,
+  const myobj = {
+    passwordHash: sha256(req.body.password + salt),
+    userName: req.body.userName,
+    role: req.body.role,
     salt: salt,
   };
 
   let db_connect = dbo.getDb();
   const result = await db_connect.collection("users").insertOne(myobj);
+
+  req.session.userName = myobj.userName;
+  req.session.passwordHash = myobj.passwordHash;
 
   response.json(result);
   console.log("added record: ", myobj);
@@ -105,33 +97,36 @@ authRoutes.route("/register").post(async function (req, response) {
 
 // check if user previously logged in
 authRoutes.route("/prev").get(async function (req, res) {
-  console.log("session id: ", req.sessionID);
-  console.log("username: ", req.session.userName);
-  console.log("passwordHash: ", req.session.passwordHash); 
+  console.log("In /prev, session id: ", req.sessionID);
 
   if (req.session.userName) {
-    // Check for a session variable that you know is set
-    const userRecord = await get_user_by_hash(
-      req.session.userName, 
-      req.session.passwordHash
-    );
+    console.log("session id: ", req.sessionID);
+    console.log("userName: ", req.session.userName);
+    console.log("passwordHash: ", req.session.passwordHash);
+
+    const userRecord = await get_user_by_hash(req.session.userName, req.session.passwordHash);
 
     if (userRecord) {
       console.log("user found");
-      res.json({ message: "logged in" });
+      res.json({ message: "logged in", auth: 1 });
     } else {
       // User not found
-      res.status(404).send("user not found");
+      res.json({ message: "user not found" });
     }
   } else {
+    console.log("not logged int")
     // No valid session
-    res.status(401).send("not logged in");
+    //res.status(200).send("not logged in");
+    res.json({ message: "not logged in" });
   }
 });
 
 authRoutes.route("/personalData").get(async function (req, res) {
   try {
-    const userRecord = await get_user_by_id(req.session.userId);
+    const userRecord = await get_user_by_hash(
+      req.session.userName,
+      req.session.passwordHash
+    );
     res.json({ userName: userRecord.userName, role: userRecord.role });
   } catch {
     res.status(401).send("not found");
@@ -139,35 +134,27 @@ authRoutes.route("/personalData").get(async function (req, res) {
 });
 
 authRoutes.route("/logout").get(async function (req, res) {
-  try {
     req.session.destroy();
+    // console.log("/logout route");
     res.json(null);
-  } catch {
-    res.status(500).send("idk man");
-  }
 });
 
 authRoutes.route("/setSession").get(async function (req, res) {
   console.log(req.session);
-  if (!req.session.username) {
-    req.session.username = "dag";
-    console.log("Session set");
-    console.log(req.session);
-  } else {
-    console.log("Session already existed");
-  }
+  req.session.userName = "plz";
+  req.session.passwordHash = "work";
   res.json("{}");
 });
 
-authRoutes.route("/getSession").get(async function (req, res) {
-  req.session.userName = "b";
-  req.session.password = "b12345";
-  if (!req.session.username) {
-    console.log("No session found");
-  } else {
-    console.log("User is: " + req.session.username);
-  }
-  res.json("{}");
-});
+// authRoutes.route("/getSession").get(async function (req, res) {
+//   req.session.userName = "plz";
+//   req.session.passwordHash = "work";
+//   if (!req.session.username) {
+//     console.log("No session found");
+//   } else {
+//     console.log("User is: " + req.session.username);
+//   }
+//   res.json("{}");
+// });
 
 module.exports = authRoutes;

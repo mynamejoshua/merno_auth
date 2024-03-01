@@ -12,15 +12,12 @@ export default function Login() {
 
     useEffect(() => {
         const fetchData = async () => {
-            const response = await fetch("http://localhost:5000/prev");
-            const data = null
-            try {
-                data = await response.json();
-            }
-            catch { console.log("no session");}
+            const response = await fetch("http://localhost:5000/prev", { method: 'GET', credentials: 'include'});
+            let data = await response.json();
 
-            if (data) {
-                navigate("/home");
+            console.log("data is: ", data);
+            if (data.auth == 1) {
+               navigate("/home");
             }
         };
 
@@ -32,6 +29,7 @@ export default function Login() {
         event.preventDefault();
 
         const response = await fetch("http://localhost:5000/auth", {
+            credentials: "include",
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
@@ -44,9 +42,9 @@ export default function Login() {
             .catch(error => {
                 window.alert(error);
             });
-
-
-        if (response.status == 200) {
+        const data = await response.json();
+        console.log("Backend auth response: " + data);
+        if (data.auth == 1) {
             navigate("/home");
         } else {
             setStatus("Failed to log in");
@@ -72,3 +70,4 @@ export default function Login() {
         </>
     )
 }
+

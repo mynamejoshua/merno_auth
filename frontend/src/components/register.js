@@ -25,7 +25,8 @@ export default function Register() {
         event.preventDefault();
         if (!name) return;
         if (!passwordRegex.test(password1)) {
-            alert("password needs a letter, a number, and at least 6 characters")
+            alert("password needs a letter, a number, and at least 6 characters");
+            return;
         }
         if (password1 !== password2) {
             alert("passwords dont match");
@@ -37,6 +38,7 @@ export default function Register() {
         }
 
         const response = await fetch("http://localhost:5000/register", {
+            credentials: 'include',
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
