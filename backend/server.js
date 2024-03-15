@@ -11,9 +11,8 @@ app.use(express.json());
 // get driver connection
 const dbo = require("./db/conn");
 
-
-
 const uri = process.env.ATLAS_URI;
+
 // Advanced usage
 app.use(session({
   secret: 'keyboard cat',
